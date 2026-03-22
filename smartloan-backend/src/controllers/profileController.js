@@ -1,5 +1,6 @@
+// src/controllers/profileController.js
+
 const db = require('../config/db');
-const { get } = require('../routes/authRoutes');
 
 const upsertProfile = async (req, res) => {
     const user_id = req.user.id;
@@ -13,6 +14,9 @@ const upsertProfile = async (req, res) => {
         credit_history_length,
         num_existing_loans,
         total_assets,
+        payment_history_pct,
+        credit_utilization,
+        num_inquiries
     } = req.body;
 
     try {
@@ -24,11 +28,16 @@ const upsertProfile = async (req, res) => {
         if (existing.length > 0) {
             await db.query(
                 `UPDATE user_financial_profiles SET
-                age = ?, monthly_income = ?, existing_emi = ?,
-                loan_amount_requested = ?, num_existing_loans = ?,
-                total_assets = ?
+                    age = ?, monthly_income = ?, existing_emi = ?,
+                    loan_amount_requested = ?, employment_type = ?,
+                    credit_history_length = ?, num_existing_loans = ?,
+                    total_assets = ?, payment_history_pct = ?,
+                    credit_utilization = ?, num_inquiries = ?
                 WHERE user_id = ?`,
-                [age, monthly_income, existing_emi, loan_amount_requested, employment_type, credit_history_length, num_existing_loans, total_assets, user_id]
+                [age, monthly_income, existing_emi, loan_amount_requested,
+                    employment_type, credit_history_length, num_existing_loans,
+                    total_assets, payment_history_pct, credit_utilization,
+                    num_inquiries, user_id]
             );
             return res.json({ message: 'Financial profile updated successfully' });
         }
@@ -36,10 +45,13 @@ const upsertProfile = async (req, res) => {
         await db.query(
             `INSERT INTO user_financial_profiles
                 (user_id, age, monthly_income, existing_emi, loan_amount_requested,
-                employment_type, credit_history_length, num_existing_loans, total_assets)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 employment_type, credit_history_length, num_existing_loans,
+                 total_assets, payment_history_pct, credit_utilization, num_inquiries)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [user_id, age, monthly_income, existing_emi, loan_amount_requested,
-                employment_type, credit_history_length, num_existing_loans, total_assets]
+                employment_type, credit_history_length, num_existing_loans,
+                total_assets, payment_history_pct || 80, credit_utilization || 30,
+                num_inquiries || 1]
         );
 
         res.status(201).json({ message: 'Financial profile created successfully' });

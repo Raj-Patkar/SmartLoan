@@ -24,15 +24,13 @@ const runAssessment = async (req, res) => {
 
         // Step 3: Build payload for Python FIS API
         const payload = {
-            age: profile.age,
+            payment_history: parseFloat(profile.payment_history_pct) || 80,
+            credit_utilization: parseFloat(profile.credit_utilization) || 30,
+            debt_to_income_ratio: parseFloat(dti.toFixed(2)),
             monthly_income: parseFloat(profile.monthly_income),
             existing_emi: parseFloat(profile.existing_emi),
-            loan_amount_requested: parseFloat(profile.loan_amount_requested),
-            employment_type: profile.employment_type,
             credit_history_length: profile.credit_history_length,
-            num_existing_loans: profile.num_existing_loans,
-            total_assets: parseFloat(profile.total_assets),
-            debt_to_income_ratio: parseFloat(dti.toFixed(2))
+            num_inquiries: profile.num_inquiries || 1
         };
 
         // Step 4: Call Python FastAPI
