@@ -1,7 +1,10 @@
+// src/routes/loanRoutes.js
+
 const express = require('express');
 const router = express.Router();
+const { getLoanRecommendations } = require('../controllers/loanController');
+const { authenticate } = require('../middleware/authMiddleware');
 
-// placeholder
-router.get('/test', (req, res) => res.json({ message: 'route works' }));
+router.get('/recommendations', authenticate, getLoanRecommendations);
 
 module.exports = router;
