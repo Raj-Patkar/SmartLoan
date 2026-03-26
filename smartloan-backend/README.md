@@ -4,10 +4,145 @@ A banking-style backend system that uses a **Fuzzy Inference System (FIS)** comb
 
 ---
 
+## Setup
+
+### 1. Clone the repo and install Node dependencies
+
+```bash
+cd smartloan-backend
+npm install
+```
+
+### 2. Configure environment variables
+
+Create a `.env` file in `smartloan-backend/`:
+
+```env
+PORT=3000
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+JWT_SECRET=your_jwt_secret
+FIS_API_URL=http://localhost:8000/predict-credit-score
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
+SESSION_SECRET=your_session_secret
+```
+
+Get your `DATABASE_URL` from the Neon dashboard → Connect button.
+
+<!-- ### 3. Set up the database
+
+Go to your Neon project → SQL Editor and run:
+
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_financial_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    age INTEGER,
+    monthly_income NUMERIC(12, 2),
+    existing_emi NUMERIC(12, 2),
+    loan_amount_requested NUMERIC(12, 2),
+    employment_type VARCHAR(100),
+    credit_history_length INTEGER,
+    num_existing_loans INTEGER,
+    total_assets NUMERIC(15, 2),
+    payment_history_pct NUMERIC(5, 2) DEFAULT 80,
+    credit_utilization NUMERIC(5, 2) DEFAULT 30,
+    num_inquiries INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE credit_assessments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    fuzzy_credit_score NUMERIC(6, 2),
+    score_band VARCHAR(50),
+    risk_level VARCHAR(50),
+    demographic_score NUMERIC(6, 2),
+    financial_score NUMERIC(6, 2),
+    asset_score NUMERIC(6, 2),
+    default_probability NUMERIC(6, 4),
+    reason_codes TEXT,
+    explanation TEXT,
+    assessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE loan_products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    interest_rate NUMERIC(5, 2),
+    tenure_months INTEGER,
+    min_credit_score NUMERIC(6, 2),
+    max_dti NUMERIC(5, 2),
+    min_income NUMERIC(12, 2),
+    max_loan_amount NUMERIC(15, 2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE loan_applications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    loan_product_id INTEGER REFERENCES loan_products(id),
+    amount_requested NUMERIC(15, 2),
+    predicted_approval_amount NUMERIC(15, 2),
+    status VARCHAR(50) DEFAULT 'pending',
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+``` -->
+
+<!-- Seed loan products:
+
+```sql
+INSERT INTO loan_products (name, interest_rate, tenure_months, min_credit_score, max_dti, min_income, max_loan_amount) VALUES
+('Personal Loan - Basic',   14.5,  36,  500, 50,  20000,   300000),
+('Personal Loan - Premium', 11.0,  60,  700, 40,  50000,   700000),
+('Home Loan',                8.5, 240,  650, 45,  40000,  5000000),
+('Car Loan',                10.5,  84,  600, 50,  30000,  1500000),
+('Education Loan',           9.0, 120,  550, 60,  15000,  2000000),
+('Business Loan',           13.0,  48,  680, 40,  60000,  1000000);
+``` -->
+
+### 4. Set up the Python FIS + ML service — Terminal 1
+
+```bash
+cd smartloan-fis
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Train the model (requires `cs-training.csv` from Kaggle "Give Me Some Credit"):
+```bash
+python train_model.py
+```
+
+Start the service — **Terminal 1**:
+```bash
+python -m uvicorn main:app --reload --port 8000
+```
+
+### 5. Start the Node.js server — Terminal 2
+
+```bash
+cd smartloan-backend
+npm run dev
+```
+
+---
+
 ## Tech Stack
 
 - **Node.js + Express.js** — REST API server
-- **MySQL** — relational database
+- **PostgreSQL (Neon)** — serverless cloud database
 - **JWT + Passport.js** — authentication (email/password + Google OAuth)
 - **Python FastAPI** — ML microservice (FIS + default prediction + explainability)
 - **scikit-fuzzy** — fuzzy logic engine
@@ -21,7 +156,7 @@ A banking-style backend system that uses a **Fuzzy Inference System (FIS)** comb
 smartloan-backend/
 ├── src/
 │   ├── config/
-│   │   ├── db.js              # MySQL connection pool
+│   │   ├── db.js              # Neon PostgreSQL connection pool
 │   │   └── passport.js        # Google OAuth strategy
 │   ├── controllers/
 │   │   ├── authController.js
@@ -60,95 +195,8 @@ smartloan-fis/
 ## Prerequisites
 
 - Node.js v18+
-- Python 3.11
-- MySQL 8.0
-
----
-
-## Setup
-
-### 1. Clone the repo and install Node dependencies
-
-```bash
-cd smartloan-backend
-npm install
-```
-
-### 2. Configure environment variables
-
-Create a `.env` file in `smartloan-backend/`:
-
-```env
-PORT=3000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_mysql_password
-DB_NAME=smartloan_db
-JWT_SECRET=your_jwt_secret
-FIS_API_URL=http://localhost:8000/predict-credit-score
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
-SESSION_SECRET=your_session_secret
-```
-
-### 3. Set up the database
-
-```bash
-mysql -u root -p
-```
-
-```sql
-CREATE DATABASE smartloan_db;
-USE smartloan_db;
-```
-
-Run all `CREATE TABLE` statements for:
-- `users`
-- `user_financial_profiles`
-- `credit_assessments`
-- `loan_products`
-- `loan_applications`
-
-Add explanation column:
-```sql
-ALTER TABLE credit_assessments ADD COLUMN explanation TEXT;
-```
-
-Seed loan products:
-```sql
-INSERT INTO loan_products (name, min_credit_score, max_dti, min_income, max_loan_amount, interest_rate, tenure_months) VALUES
-('Basic Personal Loan', 40, 50.00, 20000, 200000, 14.5, 36),
-('Standard Personal Loan', 55, 45.00, 35000, 500000, 12.0, 48),
-('Premium Personal Loan', 70, 40.00, 50000, 1000000, 10.5, 60),
-('Home Loan', 75, 35.00, 60000, 5000000, 8.5, 240),
-('Business Loan', 65, 40.00, 75000, 2000000, 13.0, 84);
-```
-
-### 4. Set up the Python FIS + ML service
-
-```bash
-cd smartloan-fis
-venv\Scripts\activate
-pip install fastapi uvicorn scikit-fuzzy scikit-learn scipy numpy pandas joblib packaging networkx
-```
-
-Train the model (requires `cs-training.csv` from Kaggle "Give Me Some Credit"):
-```bash
-python train_model.py
-```
-
-Start the service:
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-### 5. Start the Node.js server
-
-```bash
-cd smartloan-backend
-npm run dev
-```
+- Python 3.11+
+- A [Neon](https://console.neon.tech) account (free tier works)
 
 ---
 

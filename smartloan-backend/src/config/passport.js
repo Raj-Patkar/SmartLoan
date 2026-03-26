@@ -12,22 +12,18 @@ passport.use(new GoogleStrategy({
             const email = profile.emails[0].value;
             const full_name = profile.displayName;
 
-            // Check if user already exists
-            const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+            const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
 
             if (rows.length > 0) {
-                // User exists, return them
                 return done(null, rows[0]);
             }
 
-            // New user — insert into DB (no password for Google users)
-            const [result] = await db.query(
-                'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
+            const { rows: inserted } = await db.query(
+                'INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *',
                 [full_name, email, 'GOOGLE_AUTH', 'user']
             );
 
-            const [newUser] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
-            return done(null, newUser[0]);
+            return done(null, inserted[0]);
 
         } catch (err) {
             return done(err, null);

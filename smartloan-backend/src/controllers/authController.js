@@ -7,18 +7,15 @@ const register = async (req, res) => {
     const { full_name, email, password, role } = req.body;
 
     try {
-        // Check if email already exists
-        const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+        const { rows: existing } = await db.query('SELECT id FROM users WHERE email = $1', [email]);
         if (existing.length > 0) {
             return res.status(400).json({ message: 'Email already registered' });
         }
 
-        // Hash the password (10 = salt rounds, higher = slower but safer)
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert user into DB
         await db.query(
-            'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
+            'INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)',
             [full_name, email, hashedPassword, role || 'user']
         );
 
@@ -33,25 +30,22 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Find user by email
-        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
         if (rows.length === 0) {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         const user = rows[0];
 
-        // Compare entered password with hashed password in DB
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        // Generate JWT token
         const token = jwt.sign(
-            { id: user.id, role: user.role },   // payload
-            process.env.JWT_SECRET,              // secret key
-            { expiresIn: '7d' }                  // token expires in 7 days
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
         );
 
         res.json({

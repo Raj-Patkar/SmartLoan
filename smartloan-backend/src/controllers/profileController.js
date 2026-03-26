@@ -6,34 +6,26 @@ const upsertProfile = async (req, res) => {
     const user_id = req.user.id;
 
     const {
-        age,
-        monthly_income,
-        existing_emi,
-        loan_amount_requested,
-        employment_type,
-        credit_history_length,
-        num_existing_loans,
-        total_assets,
-        payment_history_pct,
-        credit_utilization,
-        num_inquiries
+        age, monthly_income, existing_emi, loan_amount_requested,
+        employment_type, credit_history_length, num_existing_loans,
+        total_assets, payment_history_pct, credit_utilization, num_inquiries
     } = req.body;
 
     try {
-        const [existing] = await db.query(
-            'SELECT id FROM user_financial_profiles WHERE user_id = ?',
+        const { rows: existing } = await db.query(
+            'SELECT id FROM user_financial_profiles WHERE user_id = $1',
             [user_id]
         );
 
         if (existing.length > 0) {
             await db.query(
                 `UPDATE user_financial_profiles SET
-                    age = ?, monthly_income = ?, existing_emi = ?,
-                    loan_amount_requested = ?, employment_type = ?,
-                    credit_history_length = ?, num_existing_loans = ?,
-                    total_assets = ?, payment_history_pct = ?,
-                    credit_utilization = ?, num_inquiries = ?
-                WHERE user_id = ?`,
+                    age = $1, monthly_income = $2, existing_emi = $3,
+                    loan_amount_requested = $4, employment_type = $5,
+                    credit_history_length = $6, num_existing_loans = $7,
+                    total_assets = $8, payment_history_pct = $9,
+                    credit_utilization = $10, num_inquiries = $11
+                WHERE user_id = $12`,
                 [age, monthly_income, existing_emi, loan_amount_requested,
                     employment_type, credit_history_length, num_existing_loans,
                     total_assets, payment_history_pct, credit_utilization,
@@ -47,7 +39,7 @@ const upsertProfile = async (req, res) => {
                 (user_id, age, monthly_income, existing_emi, loan_amount_requested,
                  employment_type, credit_history_length, num_existing_loans,
                  total_assets, payment_history_pct, credit_utilization, num_inquiries)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
             [user_id, age, monthly_income, existing_emi, loan_amount_requested,
                 employment_type, credit_history_length, num_existing_loans,
                 total_assets, payment_history_pct || 80, credit_utilization || 30,
@@ -64,8 +56,8 @@ const getProfile = async (req, res) => {
     const user_id = req.user.id;
 
     try {
-        const [rows] = await db.query(
-            'SELECT * FROM user_financial_profiles WHERE user_id = ?',
+        const { rows } = await db.query(
+            'SELECT * FROM user_financial_profiles WHERE user_id = $1',
             [user_id]
         );
 

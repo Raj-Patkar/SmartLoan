@@ -2,10 +2,9 @@
 
 const db = require('../config/db');
 
-// GET all users
 const getAllUsers = async (req, res) => {
     try {
-        const [rows] = await db.query(
+        const { rows } = await db.query(
             `SELECT u.id, u.full_name, u.email, u.role, u.created_at,
                     ufp.monthly_income, ufp.employment_type,
                     ca.fuzzy_credit_score, ca.risk_level, ca.score_band
@@ -28,10 +27,9 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-// GET all loan applications
 const getAllApplications = async (req, res) => {
     try {
-        const [rows] = await db.query(
+        const { rows } = await db.query(
             `SELECT la.id, la.status, la.amount_requested, la.predicted_approval_amount, la.applied_at,
                     u.full_name, u.email,
                     lp.name as product_name, lp.interest_rate, lp.tenure_months,
@@ -55,7 +53,6 @@ const getAllApplications = async (req, res) => {
     }
 };
 
-// PATCH update application status (approve/reject)
 const updateApplicationStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
@@ -65,8 +62,8 @@ const updateApplicationStatus = async (req, res) => {
     }
 
     try {
-        const [existing] = await db.query(
-            'SELECT id FROM loan_applications WHERE id = ?', [id]
+        const { rows: existing } = await db.query(
+            'SELECT id FROM loan_applications WHERE id = $1', [id]
         );
 
         if (existing.length === 0) {
@@ -74,7 +71,7 @@ const updateApplicationStatus = async (req, res) => {
         }
 
         await db.query(
-            'UPDATE loan_applications SET status = ? WHERE id = ?',
+            'UPDATE loan_applications SET status = $1 WHERE id = $2',
             [status, id]
         );
 
@@ -84,11 +81,9 @@ const updateApplicationStatus = async (req, res) => {
     }
 };
 
-// GET risk analytics
 const getRiskAnalytics = async (req, res) => {
     try {
-        // Risk level distribution
-        const [riskDist] = await db.query(
+        const { rows: riskDist } = await db.query(
             `SELECT risk_level, COUNT(*) as count
              FROM (
                 SELECT user_id, risk_level
@@ -100,9 +95,8 @@ const getRiskAnalytics = async (req, res) => {
              GROUP BY risk_level`
         );
 
-        // Average credit score
-        const [avgScore] = await db.query(
-            `SELECT ROUND(AVG(fuzzy_credit_score), 2) as avg_credit_score,
+        const { rows: avgScore } = await db.query(
+            `SELECT ROUND(AVG(fuzzy_credit_score)::numeric, 2) as avg_credit_score,
                     MIN(fuzzy_credit_score) as min_score,
                     MAX(fuzzy_credit_score) as max_score
              FROM (
@@ -114,16 +108,14 @@ const getRiskAnalytics = async (req, res) => {
              ) latest`
         );
 
-        // Application status breakdown
-        const [appStats] = await db.query(
+        const { rows: appStats } = await db.query(
             `SELECT status, COUNT(*) as count,
-                    ROUND(SUM(predicted_approval_amount), 2) as total_approval_amount
+                    ROUND(SUM(predicted_approval_amount)::numeric, 2) as total_approval_amount
              FROM loan_applications
              GROUP BY status`
         );
 
-        // Score band distribution
-        const [scoreBands] = await db.query(
+        const { rows: scoreBands } = await db.query(
             `SELECT score_band, COUNT(*) as count
              FROM (
                 SELECT user_id, score_band
