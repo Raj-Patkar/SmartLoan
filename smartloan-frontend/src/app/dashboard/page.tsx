@@ -37,6 +37,7 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [hasProfile, setHasProfile] = useState<boolean>(false);
+  const [view, setView] = useState<"form" | "dashboard">("form");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -57,6 +58,7 @@ export default function Dashboard() {
       if (res.data?.profile) {
         setForm(res.data.profile);
         setHasProfile(true);
+        setView("dashboard");
       }
     } catch (error) {
       setHasProfile(false);
@@ -123,6 +125,98 @@ export default function Dashboard() {
     );
   }
 
+  const runAssessment = async () => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/assessment/run",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log(res.data);
+      alert("Assessment completed!");
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to run assessment");
+    }
+  };
+
+  if (view === "dashboard") {
+    return (
+      <div className="min-h-screen bg-gray-100 p-8">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            SmartLoan Dashboard
+          </h1>
+
+          <div className="flex gap-3">
+            <button onClick={runAssessment} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+              Run Credit Score
+            </button>
+
+            <button
+              onClick={() => setView("form")}
+              className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg"
+            >
+              Edit Profile
+            </button>
+          </div>
+        </div>
+
+        {/* CREDIT SCORE CARD */}
+        <div className="bg-white p-6 rounded-xl shadow mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Credit Score
+          </h2>
+          <p className="text-gray-500 mt-2">
+            Run assessment to see your credit score and risk level
+          </p>
+        </div>
+
+        {/* LOANS SECTION */}
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Available Loan Options
+          </h2>
+
+          <div className="grid grid-cols-3 gap-4">
+
+            {/* SAMPLE CARD */}
+            <div className="border p-4 rounded-lg">
+              <h3 className="font-semibold">Personal Loan</h3>
+              <p className="text-sm text-gray-500">Interest: 10%</p>
+              <p className="text-sm text-gray-500">Tenure: 12 months</p>
+
+              <button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
+                Apply
+              </button>
+            </div>
+
+            <div className="border p-4 rounded-lg">
+              <h3 className="font-semibold">Home Loan</h3>
+              <p className="text-sm text-gray-500">Interest: 8%</p>
+              <p className="text-sm text-gray-500">Tenure: 240 months</p>
+
+              <button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
+                Apply
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ================= FORM VIEW ================= */
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
 
@@ -136,7 +230,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* CARD */}
+      {/* FORM CARD */}
       <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
 
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
