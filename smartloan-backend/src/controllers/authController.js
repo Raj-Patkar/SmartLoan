@@ -5,6 +5,7 @@ const db = require('../config/db');
 // REGISTER
 const register = async (req, res) => {
     const { full_name, email, password, role } = req.body;
+    console.log(req.body);
 
     try {
         const { rows: existing } = await db.query('SELECT id FROM users WHERE email = $1', [email]);
@@ -21,6 +22,7 @@ const register = async (req, res) => {
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };

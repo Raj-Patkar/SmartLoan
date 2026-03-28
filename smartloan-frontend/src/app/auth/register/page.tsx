@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const [form, setForm] = useState({
+    full_name: "",
     email: "",
     password: "",
   });
@@ -16,9 +17,10 @@ export default function RegisterPage() {
   const handleRegister = async () => {
     try {
       await API.post("/auth/register", form);
-      router.push("/login");
-    } catch (err) {
-      alert("Registration failed");
+      router.push("/auth/login");
+    } catch (err: any) {
+      console.log(err.response?.data);
+      alert(err.response?.data?.message || "Registration failed");
     }
   };
 
@@ -30,6 +32,15 @@ export default function RegisterPage() {
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Create Account
         </h2>
+
+        <input
+          type="text"
+          placeholder="Full Name"
+          className="w-full mb-4 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          onChange={(e) =>
+            setForm({ ...form, full_name: e.target.value })
+          }
+        />
 
         <input
           type="email"
