@@ -38,15 +38,54 @@ export default function Dashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [hasProfile, setHasProfile] = useState<boolean>(false);
   const [view, setView] = useState<"form" | "dashboard">("form");
+  const [assessment, setAssessment] = useState<any>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
     if (!token) {
       router.push("/login");
-    } else {
-      fetchProfile(token);
+      return;
     }
+
+    const init = async () => {
+      try {
+        // ✅ fetch profile
+        const profileRes = await axios.get(
+          "http://localhost:5000/api/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        if (profileRes.data?.profile) {
+          setForm(profileRes.data.profile);
+          setHasProfile(true);
+          setView("dashboard");
+        }
+
+        // ✅ fetch assessment
+        try {
+          const res = await axios.get(
+            "http://localhost:5000/api/assessment/latest",
+            {
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          );
+
+          setAssessment(res.data.assessment);
+        } catch (err) {
+          console.log("No assessment yet");
+        }
+
+      } catch (err) {
+        setHasProfile(false);
+      } finally {
+        setLoading(false); // 🔥 THIS FIXES YOUR ISSUE
+      }
+    };
+
+    init();
   }, []);
 
   const fetchProfile = async (token: string) => {
@@ -172,12 +211,28 @@ export default function Dashboard() {
 
         {/* CREDIT SCORE CARD */}
         <div className="bg-white p-6 rounded-xl shadow mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
             Credit Score
           </h2>
-          <p className="text-gray-500 mt-2">
-            Run assessment to see your credit score and risk level
-          </p>
+
+          {assessment ? (
+            <>
+              <p className="text-4xl font-bold text-green-600">
+                {assessment.fuzzy_credit_score}
+              </p>
+
+              <p className="mt-2 text-gray-600">
+                Risk Level:{" "}
+                <span className="font-semibold">
+                  {assessment.risk_level}
+                </span>
+              </p>
+            </>
+          ) : (
+            <p className="text-gray-500">
+              No credit score yet. Click "Run Credit Score"
+            </p>
+          )}
         </div>
 
         {/* LOANS SECTION */}

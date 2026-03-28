@@ -35,6 +35,16 @@ const runAssessment = async (req, res) => {
         const fisResponse = await axios.post(process.env.FIS_API_URL, payload);
         const result = fisResponse.data;
 
+        console.log("RESULT FROM FASTAPI:", result);
+
+        if (
+            !result ||
+            result.fuzzy_credit_score === undefined ||
+            result.default_probability === undefined ||
+            isNaN(result.default_probability)
+        ) {
+            throw new Error("Invalid response from FastAPI");
+        }
         await db.query(
             `INSERT INTO credit_assessments
         (user_id, fuzzy_credit_score, score_band, risk_level,
@@ -43,15 +53,15 @@ const runAssessment = async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
                 user_id,
-                result.fuzzy_credit_score,
-                result.score_band,
-                result.risk_level,
-                result.demographic_score,
-                result.financial_score,
-                result.asset_score,
-                result.default_probability,
-                JSON.stringify(result.reason_codes),
-                result.explanation
+                result.fuzzy_credit_score ?? 0,
+                result.score_band ?? "Unknown",
+                result.risk_level ?? "Unknown",
+                result.demographic_score ?? 0,
+                result.financial_score ?? 0,
+                result.asset_score ?? 0,
+                Number(result.default_probability) || 0,
+                JSON.stringify(result.reason_codes ?? []),
+                result.explanation ?? ""
             ]
         );
 
