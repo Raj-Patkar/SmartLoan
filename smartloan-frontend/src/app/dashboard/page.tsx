@@ -235,36 +235,12 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* LOANS SECTION */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Available Loan Options
-          </h2>
-
-          <div className="grid grid-cols-3 gap-4">
-
-            {/* SAMPLE CARD */}
-            <div className="border p-4 rounded-lg">
-              <h3 className="font-semibold">Personal Loan</h3>
-              <p className="text-sm text-gray-500">Interest: 10%</p>
-              <p className="text-sm text-gray-500">Tenure: 12 months</p>
-
-              <button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
-                Apply
-              </button>
-            </div>
-
-            <div className="border p-4 rounded-lg">
-              <h3 className="font-semibold">Home Loan</h3>
-              <p className="text-sm text-gray-500">Interest: 8%</p>
-              <p className="text-sm text-gray-500">Tenure: 240 months</p>
-
-              <button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
-                Apply
-              </button>
-            </div>
-
-          </div>
+        <div className="flex gap-3">
+          <button onClick={() => router.push("/dashboard/loans")}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            View Loan Options
+          </button>
         </div>
       </div>
     );
