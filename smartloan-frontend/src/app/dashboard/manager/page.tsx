@@ -109,6 +109,16 @@ export default function ManagerDashboard() {
                             <p className="text-sm">
                                 Band: <b>{app.score_band}</b>
                             </p>
+                            {app.explanation && (
+                                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                                    <p className="text-xs font-semibold text-blue-700 mb-1">
+                                        Explanation
+                                    </p>
+                                    <p className="text-sm text-gray-700">
+                                        {app.explanation}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* ACTION BUTTONS */}

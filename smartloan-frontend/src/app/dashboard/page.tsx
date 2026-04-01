@@ -233,11 +233,22 @@ export default function Dashboard() {
               No credit score yet. Click "Run Credit Score"
             </p>
           )}
+
+          {assessment?.explanation && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm font-semibold text-blue-800 mb-1">
+                Why this score?
+              </p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {assessment.explanation}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3">
           <button onClick={() => router.push("/dashboard/loans")}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
           >
             View Loan Options
           </button>

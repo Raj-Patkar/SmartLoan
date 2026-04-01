@@ -33,7 +33,7 @@ const getAllApplications = async (req, res) => {
             `SELECT la.id, la.status, la.amount_requested, la.predicted_approval_amount, la.applied_at,
                     u.full_name, u.email,
                     lp.name as product_name, lp.interest_rate, lp.tenure_months,
-                    ca.fuzzy_credit_score, ca.risk_level, ca.score_band
+                    ca.fuzzy_credit_score, ca.risk_level, ca.score_band, ca.explanation
              FROM loan_applications la
              JOIN users u ON la.user_id = u.id
              JOIN loan_products lp ON la.loan_product_id = lp.id
@@ -44,6 +44,7 @@ const getAllApplications = async (req, res) => {
                     SELECT MAX(id) FROM credit_assessments GROUP BY user_id
                 )
              ) ca ON la.user_id = ca.user_id
+             WHERE la.status = 'pending'
              ORDER BY la.applied_at DESC`
         );
 
