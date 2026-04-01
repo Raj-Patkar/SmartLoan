@@ -20,7 +20,7 @@ type FormType = {
 
 export default function Dashboard() {
   const router = useRouter();
-
+  const [userName, setUserName] = useState<string>("");
   const [form, setForm] = useState<FormType>({
     age: "",
     monthly_income: "",
@@ -42,7 +42,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
+    const storedName = localStorage.getItem("userName");
+    if (storedName) {
+      setUserName(storedName);
+    }
     if (!token) {
       router.push("/login");
       return;
@@ -187,71 +190,123 @@ export default function Dashboard() {
 
   if (view === "dashboard") {
     return (
-      <div className="min-h-screen bg-gray-100 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-200 via-white to-blue-300 px-4 sm:px-6 md:px-10 py-6 md:py-10">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            SmartLoan Dashboard
-          </h1>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8 md:mb-12">
 
-          <div className="flex gap-3">
-            <button onClick={runAssessment} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+          {/* LEFT */}
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+              Dashboard
+            </h1>
+            <p className="text-gray-500 mt-1 text-sm sm:text-base md:text-lg">
+              Manage your credit profile and loan eligibility
+            </p>
+          </div>
+
+          {/* RIGHT */}
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+
+            {/* BUTTON 1 */}
+            <button
+              onClick={runAssessment}
+              className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold shadow-md transition"
+            >
               Run Credit Score
             </button>
 
+            {/* BUTTON 2 */}
             <button
               onClick={() => setView("form")}
-              className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg"
+              className="w-full md:w-auto bg-gray-900 hover:bg-black text-white px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold shadow-md transition"
             >
               Edit Profile
             </button>
+
+            {/* PROFILE */}
+            <div className="flex items-center justify-center md:justify-start gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm">
+
+              {/* ICON */}
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
+                {userName ? userName.charAt(0).toUpperCase() : "U"}
+              </div>
+
+              {/* NAME */}
+              <p className="text-sm font-medium text-gray-800 truncate">
+                {userName || "User"}
+              </p>
+
+            </div>
+
           </div>
         </div>
 
-        {/* CREDIT SCORE CARD */}
-        <div className="bg-white p-6 rounded-xl shadow mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Credit Score
-          </h2>
+        {/* MAIN CONTENT */}
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
 
-          {assessment ? (
-            <>
-              <p className="text-4xl font-bold text-green-600">
-                {assessment.fuzzy_credit_score}
-              </p>
+          {/* CREDIT CARD */}
+          <div className="md:col-span-2 bg-white p-6 sm:p-8 md:p-10 rounded-2xl md:rounded-3xl shadow-lg border border-gray-100">
 
-              <p className="mt-2 text-gray-600">
-                Risk Level:{" "}
-                <span className="font-semibold">
-                  {assessment.risk_level}
-                </span>
-              </p>
-            </>
-          ) : (
-            <p className="text-gray-500">
-              No credit score yet. Click "Run Credit Score"
-            </p>
-          )}
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-700 mb-4 md:mb-6">
+              Credit Score Overview
+            </h2>
 
-          {assessment?.explanation && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-semibold text-blue-800 mb-1">
-                Why this score?
+            {assessment ? (
+              <>
+                <div>
+                  <p className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-green-600">
+                    {assessment.fuzzy_credit_score}
+                  </p>
+
+                  <p className="mt-2 md:mt-3 text-sm sm:text-base md:text-lg text-gray-600">
+                    Risk Level:
+                    <span className="ml-2 font-semibold text-gray-900">
+                      {assessment.risk_level}
+                    </span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-500 text-sm sm:text-base">
+                No credit score yet. Click "Run Credit Score"
               </p>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {assessment.explanation}
+            )}
+
+            {/* EXPLANATION */}
+            {assessment?.explanation && (
+              <div className="mt-6 md:mt-8 p-4 sm:p-5 md:p-6 bg-blue-50 border border-blue-200 rounded-xl md:rounded-2xl">
+                <p className="text-sm sm:text-base font-semibold text-blue-800 mb-2">
+                  Why this score?
+                </p>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                  {assessment.explanation}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* SIDE PANEL */}
+          <div className="bg-white p-6 sm:p-7 md:p-8 rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 flex flex-col justify-between">
+
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-3 md:mb-4">
+                Quick Actions
+              </h3>
+
+              <p className="text-gray-500 text-xs sm:text-sm mb-4 md:mb-6">
+                Explore loan options based on your credit profile
               </p>
             </div>
-          )}
-        </div>
 
-        <div className="flex gap-3">
-          <button onClick={() => router.push("/dashboard/loans")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-          >
-            View Loan Options
-          </button>
+            <button
+              onClick={() => router.push("/dashboard/loans")}
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 rounded-xl text-sm sm:text-base font-semibold shadow-md transition w-full"
+            >
+              View Loan Options
+            </button>
+          </div>
+
         </div>
       </div>
     );
@@ -260,54 +315,70 @@ export default function Dashboard() {
   /* ================= FORM VIEW ================= */
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-white to-blue-300 px-4 sm:px-6 md:px-10 py-6 md:py-10">
 
-      {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          {hasProfile
-            ? "Update your financial profile"
-            : "Fill your financial profile"}
-        </p>
-      </div>
+      {/* CONTAINER */}
+      <div className="max-w-6xl mx-auto">
 
-      {/* FORM CARD */}
-      <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
+        {/* HEADER */}
+        <div className="mb-8 md:mb-10">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+            Financial Profile
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base md:text-lg">
+            {hasProfile
+              ? "Update your financial details"
+              : "Provide your financial details"}
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+        {/* FORM CARD */}
+        <div className="bg-white p-6 sm:p-8 md:p-10 rounded-2xl md:rounded-3xl shadow-xl border border-gray-100">
 
-          <Input name="age" label="Age" value={form.age} onChange={handleChange} />
-          <Input name="monthly_income" label="Monthly Income" value={form.monthly_income} onChange={handleChange} />
-          <Input name="existing_emi" label="Existing EMI" value={form.existing_emi} onChange={handleChange} />
-          <Input name="loan_amount_requested" label="Loan Amount Requested" value={form.loan_amount_requested} onChange={handleChange} />
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6"
+          >
 
-          <div className="flex flex-col">
-            <label className="text-sm text-gray-600 mb-1">Employment Type</label>
-            <select
-              name="employment_type"
-              value={form.employment_type}
-              onChange={handleChange}
-              className="p-2 rounded border border-gray-300 bg-white"
-            >
-              <option value="">Select</option>
-              <option value="salaried">Salaried</option>
-              <option value="self-employed">Self-employed</option>
-            </select>
-          </div>
+            {/* INPUTS */}
+            <Input name="age" label="Age" value={form.age} onChange={handleChange} />
+            <Input name="monthly_income" label="Monthly Income" value={form.monthly_income} onChange={handleChange} />
+            <Input name="existing_emi" label="Existing EMI" value={form.existing_emi} onChange={handleChange} />
+            <Input name="loan_amount_requested" label="Loan Amount Requested" value={form.loan_amount_requested} onChange={handleChange} />
 
-          <Input name="credit_history_length" label="Credit History Length" value={form.credit_history_length} onChange={handleChange} />
-          <Input name="num_existing_loans" label="Number of Loans" value={form.num_existing_loans} onChange={handleChange} />
-          <Input name="total_assets" label="Total Assets" value={form.total_assets} onChange={handleChange} />
-          <Input name="payment_history_pct" label="Payment History %" value={form.payment_history_pct} onChange={handleChange} />
-          <Input name="credit_utilization" label="Credit Utilization %" value={form.credit_utilization} onChange={handleChange} />
-          <Input name="num_inquiries" label="Number of Inquiries" value={form.num_inquiries} onChange={handleChange} />
+            {/* SELECT */}
+            <div className="flex flex-col">
+              <label className="text-sm sm:text-base text-gray-600 mb-2">
+                Employment Type
+              </label>
+              <select
+                name="employment_type"
+                value={form.employment_type}
+                onChange={handleChange}
+                className="w-full p-3 sm:p-4 text-sm sm:text-base rounded-xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+              >
+                <option value="">Select</option>
+                <option value="salaried">Salaried</option>
+                <option value="self-employed">Self-employed</option>
+              </select>
+            </div>
 
-          <button className="col-span-2 mt-4 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition">
-            {hasProfile ? "Update Profile" : "Create Profile"}
-          </button>
+            <Input name="credit_history_length" label="Credit History Length" value={form.credit_history_length} onChange={handleChange} />
+            <Input name="num_existing_loans" label="Number of Loans" value={form.num_existing_loans} onChange={handleChange} />
+            <Input name="total_assets" label="Total Assets" value={form.total_assets} onChange={handleChange} />
+            <Input name="payment_history_pct" label="Payment History %" value={form.payment_history_pct} onChange={handleChange} />
+            <Input name="credit_utilization" label="Credit Utilization %" value={form.credit_utilization} onChange={handleChange} />
+            <Input name="num_inquiries" label="Number of Inquiries" value={form.num_inquiries} onChange={handleChange} />
 
-        </form>
+            {/* BUTTON */}
+            <div className="col-span-1 sm:col-span-2 mt-4">
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 sm:py-4 rounded-xl text-sm sm:text-base md:text-lg font-semibold shadow-md transition">
+                {hasProfile ? "Update Profile" : "Create Profile"}
+              </button>
+            </div>
+
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -324,12 +395,14 @@ type InputProps = {
 function Input({ name, label, value, onChange }: InputProps) {
   return (
     <div className="flex flex-col">
-      <label className="text-sm text-gray-600 mb-1">{label}</label>
+      <label className="text-sm sm:text-base text-gray-600 mb-2">
+        {label}
+      </label>
       <input
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="p-2 rounded border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full p-3 sm:p-4 text-sm sm:text-base rounded-xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
       />
     </div>
   );

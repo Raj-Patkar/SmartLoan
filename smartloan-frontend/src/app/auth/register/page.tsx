@@ -25,54 +25,66 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-50">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 via-white to-blue-300 px-4">
 
-      <div className="w-full max-w-md p-8 rounded-2xl bg-white border border-gray-200 shadow-lg">
+      <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl bg-white border border-gray-200 shadow-xl">
 
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          Create Account
-        </h2>
+        {/* HEADER */}
+        <div className="mb-6 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Create Account
+          </h2>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">
+            Start your SmartLoan journey
+          </p>
+        </div>
 
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="w-full mb-4 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onChange={(e) =>
-            setForm({ ...form, full_name: e.target.value })
-          }
-        />
+        {/* FORM */}
+        <div className="space-y-4">
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full mb-4 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onChange={(e) =>
-            setForm({ ...form, email: e.target.value })
-          }
-        />
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="w-full p-3 sm:p-4 text-sm sm:text-base rounded-xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+            onChange={(e) =>
+              setForm({ ...form, full_name: e.target.value })
+            }
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full mb-6 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onChange={(e) =>
-            setForm({ ...form, password: e.target.value })
-          }
-        />
+          <input
+            type="email"
+            placeholder="Email address"
+            className="w-full p-3 sm:p-4 text-sm sm:text-base rounded-xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
 
-        <button
-          onClick={handleRegister}
-          className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
-        >
-          Register
-        </button>
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full p-3 sm:p-4 text-sm sm:text-base rounded-xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
+          />
 
-        <p className="text-sm text-gray-500 mt-4 text-center">
+          <button
+            onClick={handleRegister}
+            className="w-full py-3 sm:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm sm:text-base font-semibold shadow-md transition"
+          >
+            Register
+          </button>
+        </div>
+
+        {/* FOOTER */}
+        <p className="text-sm text-gray-500 mt-5 text-center">
           Already have an account?{" "}
-          <Link href="/auth/login" className="text-blue-600 font-medium">
+          <Link href="/auth/login" className="text-blue-600 font-medium hover:underline">
             Login
           </Link>
         </p>
+
       </div>
     </div>
   );
