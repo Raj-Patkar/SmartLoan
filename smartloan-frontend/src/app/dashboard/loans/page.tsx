@@ -84,7 +84,9 @@ export default function LoansPage() {
     };
     return (
         <div className="min-h-screen bg-gray-100 p-8">
-
+            <a href="/dashboard/my-applications">
+                My Applications
+            </a>
             <h1 className="text-3xl font-bold mb-6">Recommended Loans</h1>
 
             {loans.length === 0 ? (

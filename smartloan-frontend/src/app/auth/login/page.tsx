@@ -16,8 +16,20 @@ export default function LoginPage() {
   const handleLogin = async () => {
     try {
       const res = await API.post("/auth/login", form);
-      localStorage.setItem("token", res.data.token);
-      router.push("/dashboard");
+
+      const { token, user } = res.data;
+
+      // ✅ store token + role
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", user.role);
+
+      // 🔥 ROLE BASED REDIRECT
+      if (user.role === "manager") {
+        router.push("/dashboard/manager");
+      } else {
+        router.push("/dashboard");
+      }
+
     } catch (err) {
       alert("Invalid credentials");
     }
