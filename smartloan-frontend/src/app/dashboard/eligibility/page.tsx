@@ -12,7 +12,8 @@ export default function EligibilityPage() {
     const [assessment, setAssessment] = useState<any>(null);
     const [running, setRunning] = useState(false);
     const [showModal, setShowModal] = useState(false);
-
+    const [loans, setLoans] = useState<any[]>([]);
+    const [loanLoading, setLoanLoading] = useState(false);
     const [form, setForm] = useState<any>({
         age: "",
         monthly_income: "",
@@ -61,6 +62,19 @@ export default function EligibilityPage() {
                 );
 
                 setAssessment(res.data.assessment);
+                if (res.data.assessment) {
+                    setLoanLoading(true);
+
+                    const loanRes = await axios.get(
+                        "http://localhost:5000/api/loans/recommendations",
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+
+                    
+
+                    setLoans(loanRes.data.eligible_products || []);
+                    setLoanLoading(false);
+                }
 
             } catch { }
         };
@@ -74,6 +88,41 @@ export default function EligibilityPage() {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
+    const applyLoan = async (loan: any) => {
+        const token = localStorage.getItem("token");
+
+        const amount = prompt(`Enter loan amount (Max ₹${loan.max_loan_amount})`);
+        if (!amount) return;
+
+        const amountNumber = Number(amount);
+
+        if (isNaN(amountNumber) || amountNumber <= 0) {
+            alert("Invalid amount");
+            return;
+        }
+
+        if (amountNumber > loan.max_loan_amount) {
+            alert(`Amount cannot exceed ₹${loan.max_loan_amount}`);
+            return;
+        }
+
+        try {
+            await axios.post(
+                "http://localhost:5000/api/loans/apply",
+                {
+                    loan_product_id: loan.id,
+                    amount_requested: amountNumber
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            alert(`✅ Applied successfully!`);
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to apply");
+        }
+    };
     const saveProfile = async () => {
         const token = localStorage.getItem("token");
 
@@ -87,21 +136,47 @@ export default function EligibilityPage() {
 
     const runAssessment = async () => {
         const token = localStorage.getItem("token");
-        setRunning(true);
 
-        await axios.post(
-            "http://localhost:5000/api/assessment/run",
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-        window.location.reload();
-        const res = await axios.get(
-            "http://localhost:5000/api/assessment/latest",
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
+        try {
+            setRunning(true);
 
-        setAssessment(res.data.assessment);
-        setRunning(false);
+            // 🔹 Run assessment
+            await axios.post(
+                "http://localhost:5000/api/assessment/run",
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // 🔹 Get latest assessment
+            const res = await axios.get(
+                "http://localhost:5000/api/assessment/latest",
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setAssessment(res.data.assessment);
+
+            // 🔹 Fetch loan recommendations
+            if (res.data.assessment) {
+                setLoanLoading(true);
+
+                const loanRes = await axios.get(
+                    "http://localhost:5000/api/loans/recommendations",
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                setLoans(loanRes.data.eligible_products || []);
+                setLoanLoading(false);
+            }
+
+        } catch (err: any) {
+            console.error(err);
+            alert(
+                err.response?.data?.message ||
+                "Something went wrong while running analysis"
+            );
+        } finally {
+            setRunning(false);
+        }
     };
 
     return (
@@ -119,7 +194,7 @@ export default function EligibilityPage() {
                 <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
 
                     {/* DASHBOARD (hide on small) */}
-                    
+
 
                     {/* USER */}
                     <div className="flex items-center gap-1 sm:gap-2">
@@ -130,7 +205,12 @@ export default function EligibilityPage() {
                             {userName}
                         </span>
                     </div>
-
+                    <span
+                        onClick={() => router.push("/dashboard/my-applications")}
+                        className="hidden md:block text-sm hover:text-blue-600 cursor-pointer transition"
+                    >
+                        My Applications
+                    </span>
                     {/* LOGOUT */}
                     <button
                         onClick={() => {
@@ -239,6 +319,86 @@ export default function EligibilityPage() {
                     </div>
 
                 </div>
+                {assessment && (
+                    <div className="mt-14">
+
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-semibold">
+                                Recommended Loans
+                            </h2>
+
+                            <span
+                                onClick={() => router.push("/dashboard/my-applications")}
+                                className="text-blue-600 cursor-pointer font-medium hover:underline"
+                            >
+                                View Applications →
+                            </span>
+                        </div>
+
+                        {loanLoading ? (
+                            <div className="bg-white p-6 rounded-2xl border text-center text-gray-500">
+                                Loading loan recommendations...
+                            </div>
+                        ) : loans.length === 0 ? (
+                            <div className="bg-white p-6 rounded-2xl border text-center text-gray-500">
+                                No loan recommendations available
+                            </div>
+                        ) : (
+
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                                {loans.map((loan) => (
+                                    <div
+                                        key={loan.id || loan.product_id}
+                                        className="group bg-white p-6 rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition"
+                                    >
+
+                                        <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
+                                            {loan.category || "Loan"}
+                                        </span>
+
+                                        <h3 className="mt-3 font-semibold text-lg group-hover:text-blue-600">
+                                            {loan.name}
+                                        </h3>
+
+                                        <p className="text-sm text-gray-500 mt-2">
+                                            {loan.description}
+                                        </p>
+
+                                        <div className="mt-4 bg-gray-50 p-4 rounded-xl border">
+
+                                            <div className="flex justify-between text-sm">
+                                                <div>
+                                                    <p className="text-gray-500">Interest</p>
+                                                    <p className="font-semibold">{loan.interest_rate}%</p>
+                                                </div>
+
+                                                <div>
+                                                    <p className="text-gray-500">Tenure</p>
+                                                    <p className="font-semibold">{loan.tenure_months} mo</p>
+                                                </div>
+                                            </div>
+
+                                            <p className="mt-3 text-green-600 font-bold text-lg">
+                                                ₹ {Number(loan.max_loan_amount).toLocaleString()}
+                                            </p>
+
+                                        </div>
+
+                                        <button
+                                            onClick={() => applyLoan(loan)}
+                                            className="mt-5 w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
+                                        >
+                                            Apply Now →
+                                        </button>
+
+                                    </div>
+                                ))}
+
+                            </div>
+                        )}
+                    </div>
+                )}
 
             </div>
 
