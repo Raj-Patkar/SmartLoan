@@ -1,188 +1,165 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function ManagerDashboard() {
-    const [applications, setApplications] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const router = useRouter();
+  const router = useRouter();
 
-    useEffect(() => {
-        const role = localStorage.getItem("role");
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loans, setLoans] = useState<any[]>([]);
+  const [userName, setUserName] = useState("");
+  const [loading, setLoading] = useState(true);
 
-        if (role !== "manager") {
-            router.push("/dashboard");
-        } else {
-            fetchApplications(); // only if manager
-        }
-    }, []);
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-    const fetchApplications = async () => {
-        try {
-            const res = await axios.get(
-                "http://localhost:5000/api/manager/applications",
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    const name = localStorage.getItem("userName");
 
-            setApplications(res.data.applications || []);
-        } catch (err) {
-            console.error("Error fetching applications");
-        } finally {
-            setLoading(false);
-        }
-    };
+    if (name) setUserName(name);
 
-
-
-    const updateStatus = async (id: number, status: "approved" | "rejected") => {
-        try {
-            await axios.patch(
-                `http://localhost:5000/api/manager/applications/${id}/status`,
-                { status },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
-
-            alert(`Application ${status}`);
-            fetchApplications(); // refresh
-        } catch (err) {
-            alert("Error updating status");
-        }
-    };
-
-    if (loading) {
-        return <div className="p-10">Loading dashboard...</div>;
+    if (role !== "manager") {
+      router.push("/dashboard");
+    } else {
+      init();
     }
+  }, []);
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-green-200 via-white to-green-200 px-4 sm:px-6 md:px-10 py-6 md:py-10">
+  const init = async () => {
+    try {
+      const appRes = await axios.get(
+        "http://localhost:5000/api/manager/applications",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-            {/* CONTAINER */}
-            <div className="max-w-12xl mx-auto">
+      setApplications(appRes.data.applications || []);
 
-                {/* HEADER */}
-                <div className="mb-8 md:mb-10">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
-                        Manager Dashboard
-                    </h1>
-                    <p className="text-gray-500 mt-1 text-sm sm:text-base md:text-lg">
-                        Review and manage loan applications
-                    </p>
-                </div>
+      // 🔥 FETCH ALL LOANS
+      const loanRes = await axios.get(
+        "http://localhost:5000/api/loans",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-                {/* GRID */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      setLoans(loanRes.data.loans || []);
 
-                    {applications.map((app) => (
-                        <div
-                            key={app.id}
-                            className="bg-white p-6 sm:p-7 rounded-2xl shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
-                        >
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                            {/* TOP */}
-                            <div>
+  const total = applications.length;
+  const approved = applications.filter(
+    (a) => a.status?.toLowerCase().trim() === "approved"
+  ).length;
 
-                                {/* USER */}
-                                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-                                    {app.full_name}
-                                </h2>
-                                <p className="text-sm text-gray-500">{app.email}</p>
+  const rejected = applications.filter(
+    (a) => a.status?.toLowerCase().trim() === "rejected"
+  ).length;
+  console.log(applications.map(a => a.status));
+  const pending = applications.filter(
+    (a) => a.status?.toLowerCase().trim() === "pending"
+  ).length;
 
-                                {/* LOAN */}
-                                <p className="mt-3 font-medium text-blue-600 text-sm sm:text-base">
-                                    {app.product_name}
-                                </p>
+  if (loading) return <div className="p-10">Loading...</div>;
 
-                                {/* STATUS */}
-                                <span className={`inline-block mt-3 px-3 py-1 text-xs sm:text-sm rounded-full font-semibold
-                ${app.status === "approved"
-                                        ? "bg-green-100 text-green-700"
-                                        : app.status === "rejected"
-                                            ? "bg-red-100 text-red-700"
-                                            : "bg-yellow-100 text-yellow-700"}
-              `}>
-                                    {app.status.toUpperCase()}
-                                </span>
+  return (
+    <div className="min-h-screen  text-gray-800">
 
-                                {/* AMOUNTS */}
-                                <div className="mt-5 space-y-2 text-sm sm:text-base text-gray-700">
-                                    <p>
-                                        <span className="text-gray-500">Requested:</span>{" "}
-                                        ₹ {Number(app.amount_requested).toLocaleString()}
-                                    </p>
-                                    <p className="text-green-600 font-semibold">
-                                        Predicted: ₹ {Number(app.predicted_approval_amount).toLocaleString()}
-                                    </p>
-                                </div>
+      {/* NAVBAR */}
+      <div className="flex justify-between items-center px-4 sm:px-6 md:px-16 py-4 bg-white border-b border-gray-200 sticky top-0 z-50">
 
-                                {/* CREDIT INFO */}
-                                <div className="mt-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <h1
+          onClick={() => router.push("/dashboard")}
+          className="text-lg sm:text-xl md:text-2xl font-semibold hover:text-blue-600 cursor-pointer"
+        >
+          SmartLoan
+        </h1>
 
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-sm text-gray-500">Credit Score</p>
-                                        <p className="text-xl font-bold text-green-600">
-                                            {app.fuzzy_credit_score}
-                                        </p>
-                                    </div>
+        <div className="flex items-center gap-4">
 
-                                    <p className="text-sm mt-2 text-gray-600">
-                                        Risk:
-                                        <span className="ml-2 font-semibold text-gray-900">
-                                            {app.risk_level}
-                                        </span>
-                                    </p>
+          <span className="hidden md:block text-sm text-blue-600 font-medium">
+            Manager
+          </span>
 
-                                    <p className="text-sm text-gray-600">
-                                        Band:
-                                        <span className="ml-2 font-semibold text-gray-900">
-                                            {app.score_band}
-                                        </span>
-                                    </p>
-
-                                    {/* EXPLANATION */}
-                                    {app.explanation && (
-                                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                            <p className="text-sm font-semibold text-blue-700 mb-1">
-                                                Explanation
-                                            </p>
-                                            <p className="text-sm text-gray-700 leading-relaxed">
-                                                {app.explanation}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* ACTIONS */}
-                            {app.status === "pending" && (
-                                <div className="flex gap-3 mt-6">
-
-                                    <button
-                                        onClick={() => updateStatus(app.id, "approved")}
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-sm sm:text-base font-semibold shadow-md transition"
-                                    >
-                                        Approve
-                                    </button>
-
-                                    <button
-                                        onClick={() => updateStatus(app.id, "rejected")}
-                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl text-sm sm:text-base font-semibold shadow-md transition"
-                                    >
-                                        Reject
-                                    </button>
-
-                                </div>
-                            )}
-
-                        </div>
-                    ))}
-                </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center">
+              {userName?.charAt(0)}
             </div>
+            <span className="text-sm">{userName}</span>
+          </div>
+
+          <button
+            onClick={() => {
+              localStorage.clear();
+              router.push("/auth/login");
+            }}
+            className="text-sm border px-3 py-1 rounded-lg hover:bg-gray-100 transition"
+          >
+            Logout
+          </button>
+
         </div>
-    );
+      </div>
+
+      <div className="px-6 md:px-16 py-10 max-w-7xl mx-auto">
+
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold">
+            Loan Applications Overview
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Monitor, review and manage all loan applications
+          </p>
+        </div>
+
+        {/* STATS */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+
+          <StatCard title="Total Applications" value={total} />
+          <StatCard title="Approved Applications" value={approved} color="green" />
+          <StatCard title="Pending Applications" value={pending} color="yellow" />
+          <StatCard title="Rejected Applications" value={rejected} color="red" />
+
+        </div>
+
+        {/* LOAN CARDS */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {loans.map((loan) => (
+            <div
+              key={loan.id}
+              onClick={() =>
+                router.push(`/dashboard/manager/${encodeURIComponent(loan.name)}`)
+              }
+              className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition cursor-pointer"
+            >
+              <h2 className="font-semibold text-lg">{loan.name}</h2>
+              <p className="text-sm text-gray-500 mt-2">
+                Click to view applications
+              </p>
+            </div>
+          ))}
+
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ title, value, color = "blue" }: any) {
+  return (
+    <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
+      <p className="text-gray-500 text-sm">{title}</p>
+      <h2 className={`text-3xl font-bold text-${color}-600 mt-2`}>
+        {value}
+      </h2>
+    </div>
+  );
 }

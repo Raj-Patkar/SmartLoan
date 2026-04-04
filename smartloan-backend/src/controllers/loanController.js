@@ -49,6 +49,21 @@ const getLoanRecommendations = async (req, res) => {
     }
 };
 
+const getAllLoans = async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM loan_products");
+
+    res.json({
+      loans: result.rows
+    });
+  } catch (err) {
+    console.error("Error fetching loans:", err);
+    res.status(500).json({ message: "Failed to fetch loans" });
+  }
+};
+
+
+
 const applyForLoan = async (req, res) => {
     const user_id = req.user.id;
     const { loan_product_id, amount_requested } = req.body;
@@ -138,4 +153,4 @@ const getMyApplications = async (req, res) => {
     }
 };
 
-module.exports = { getLoanRecommendations, applyForLoan, getMyApplications };
+module.exports = { getLoanRecommendations, applyForLoan, getMyApplications ,getAllLoans};
