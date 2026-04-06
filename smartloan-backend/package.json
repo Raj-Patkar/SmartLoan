@@ -20,7 +20,8 @@
     "jsonwebtoken": "^9.0.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
