@@ -17,21 +17,34 @@ const runAssessment = async (req, res) => {
         }
 
         const profile = rows[0];
-        const dti = (profile.existing_emi / profile.monthly_income) * 100;
+        const dti =
+            profile.monthly_income > 0
+                ? (profile.existing_emi / profile.monthly_income) * 100
+                : 0;
 
         const payload = {
-            payment_history: parseFloat(profile.payment_history_pct) || 80,
-            credit_utilization: parseFloat(profile.credit_utilization) || 30,
-            debt_to_income_ratio: parseFloat(dti.toFixed(2)),
-            monthly_income: parseFloat(profile.monthly_income),
-            existing_emi: parseFloat(profile.existing_emi),
-            credit_history_length: profile.credit_history_length,
-            num_inquiries: profile.num_inquiries || 1
+            payment_history: Number(profile.payment_history_pct ?? 80),
+            credit_utilization: Number(profile.credit_utilization ?? 30),
+            debt_to_income_ratio: Number(dti.toFixed(2)),
+            monthly_income: Number(profile.monthly_income ?? 0),
+            existing_emi: Number(profile.existing_emi ?? 0),
+            credit_history_length: Number(profile.credit_history_length ?? 1),
+            num_inquiries: Number(profile.num_inquiries ?? 1)
         };
-
+        console.log("FINAL PAYLOAD:", payload);
         const fisResponse = await axios.post(process.env.FIS_API_URL, payload);
         const result = fisResponse.data;
 
+        console.log("RESULT FROM FASTAPI:", result);
+
+        if (
+            !result ||
+            result.fuzzy_credit_score === undefined ||
+            result.default_probability === undefined ||
+            isNaN(result.default_probability)
+        ) {
+            throw new Error("Invalid response from FastAPI");
+        }
         await db.query(
             `INSERT INTO credit_assessments
         (user_id, fuzzy_credit_score, score_band, risk_level,
@@ -40,15 +53,15 @@ const runAssessment = async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
                 user_id,
-                result.fuzzy_credit_score,
-                result.score_band,
-                result.risk_level,
-                result.demographic_score,
-                result.financial_score,
-                result.asset_score,
-                result.default_probability,
-                JSON.stringify(result.reason_codes),
-                result.explanation
+                result.fuzzy_credit_score ?? 0,
+                result.score_band ?? "Unknown",
+                result.risk_level ?? "Unknown",
+                result.demographic_score ?? 0,
+                result.financial_score ?? 0,
+                result.asset_score ?? 0,
+                Number(result.default_probability) || 0,
+                JSON.stringify(result.reason_codes ?? []),
+                result.explanation ?? ""
             ]
         );
 
@@ -59,10 +72,18 @@ const runAssessment = async (req, res) => {
         });
 
     } catch (err) {
+        console.error("FULL ERROR FROM FASTAPI:", err.response?.data || err.message);
+
         if (err.code === 'ECONNREFUSED') {
-            return res.status(503).json({ message: 'FIS service unavailable. Make sure Python API is running.' });
+            return res.status(503).json({
+                message: 'FIS service unavailable. Make sure Python API is running.'
+            });
         }
-        res.status(500).json({ message: 'Server error', error: err.message });
+
+        res.status(500).json({
+            message: 'Server error',
+            error: err.response?.data || err.message
+        });
     }
 };
 

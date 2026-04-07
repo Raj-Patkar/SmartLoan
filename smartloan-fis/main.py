@@ -23,6 +23,8 @@ class CreditInput(BaseModel):
 @app.post("/predict-credit-score")
 def predict_credit_score(data: CreditInput):
     try:
+        print("RAW INPUT:", data)
+        print("DICT:", data.dict())
         # Step 1: Run FIS to get fuzzy credit score
         fis_result = run_fis(
             payment_history=data.payment_history,

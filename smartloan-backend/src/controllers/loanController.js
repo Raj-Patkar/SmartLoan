@@ -27,13 +27,20 @@ const getLoanRecommendations = async (req, res) => {
 
         const { rows: loanProducts } = await db.query('SELECT * FROM loan_products');
         const result = checkEligibility(profiles[0], assessments[0], loanProducts);
+        const eligibleProducts = result.eligible.map((item) => {
+            const full = loanProducts.find(p => p.id === item.product_id);
+
+            return full
+                ? { ...full }
+                : item;
+        });
 
         res.json({
             credit_score: assessments[0].fuzzy_credit_score,
             score_band: assessments[0].score_band,
             risk_level: assessments[0].risk_level,
             dti: result.dti,
-            eligible_products: result.eligible,
+            eligible_products: eligibleProducts,
             ineligible_products: result.ineligible
         });
 
@@ -41,6 +48,21 @@ const getLoanRecommendations = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
+
+const getAllLoans = async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM loan_products");
+
+    res.json({
+      loans: result.rows
+    });
+  } catch (err) {
+    console.error("Error fetching loans:", err);
+    res.status(500).json({ message: "Failed to fetch loans" });
+  }
+};
+
+
 
 const applyForLoan = async (req, res) => {
     const user_id = req.user.id;
@@ -131,4 +153,4 @@ const getMyApplications = async (req, res) => {
     }
 };
 
-module.exports = { getLoanRecommendations, applyForLoan, getMyApplications };
+module.exports = { getLoanRecommendations, applyForLoan, getMyApplications ,getAllLoans};

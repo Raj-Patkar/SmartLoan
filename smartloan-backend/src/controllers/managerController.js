@@ -28,29 +28,58 @@ const getAllUsers = async (req, res) => {
 };
 
 const getAllApplications = async (req, res) => {
-    try {
-        const { rows } = await db.query(
-            `SELECT la.id, la.status, la.amount_requested, la.predicted_approval_amount, la.applied_at,
-                    u.full_name, u.email,
-                    lp.name as product_name, lp.interest_rate, lp.tenure_months,
-                    ca.fuzzy_credit_score, ca.risk_level, ca.score_band
-             FROM loan_applications la
-             JOIN users u ON la.user_id = u.id
-             JOIN loan_products lp ON la.loan_product_id = lp.id
-             LEFT JOIN (
-                SELECT user_id, fuzzy_credit_score, risk_level, score_band, explanation
-                FROM credit_assessments
-                WHERE id IN (
-                    SELECT MAX(id) FROM credit_assessments GROUP BY user_id
-                )
-             ) ca ON la.user_id = ca.user_id
-             ORDER BY la.applied_at DESC`
-        );
+  try {
+    const { rows } = await db.query(
+      `SELECT 
+          la.id, 
+          la.status, 
+          la.amount_requested, 
+          la.predicted_approval_amount, 
+          la.applied_at,
 
-        res.json({ total: rows.length, applications: rows });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error', error: err.message });
-    }
+          u.full_name, 
+          u.email,
+
+          lp.name as product_name, 
+          lp.interest_rate, 
+          lp.tenure_months,
+
+          ca.fuzzy_credit_score, 
+          ca.risk_level, 
+          ca.score_band, 
+          ca.explanation
+
+       FROM loan_applications la
+
+       JOIN users u ON la.user_id = u.id
+       JOIN loan_products lp ON la.loan_product_id = lp.id
+
+       LEFT JOIN (
+          SELECT DISTINCT ON (user_id)
+                 user_id, 
+                 fuzzy_credit_score, 
+                 risk_level, 
+                 score_band, 
+                 explanation
+          FROM credit_assessments
+          ORDER BY user_id, id DESC
+       ) ca ON la.user_id = ca.user_id
+
+       ORDER BY la.applied_at DESC`
+    );
+
+    res.json({
+      total: rows.length,
+      applications: rows
+    });
+
+  } catch (err) {
+    console.error("Error fetching applications:", err);
+    res.status(500).json({
+      message: "Server error",
+      error: err.message
+    });
+  }
 };
 
 const updateApplicationStatus = async (req, res) => {
