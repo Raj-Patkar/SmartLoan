@@ -1,6 +1,6 @@
 # SmartLoan Backend
 
-A banking-style backend system that uses a **Fuzzy Inference System (FIS)** combined with a **trained Logistic Regression model** to evaluate credit scores, predict default probability, and generate AI-powered explanations for loan decisions.
+A banking-style backend system that uses a **Fuzzy Inference System (FIS)** combined with a **trained Neural Network model** to evaluate credit scores, predict default probability, and generate AI-powered explanations for loan decisions.
 
 ---
 
@@ -130,7 +130,7 @@ Start the service — **Terminal 1**:
 python -m uvicorn main:app --reload --port 8000
 ```
 
-### 5. Start the Node.js server — Terminal 2
+### 5. Start the Node.js server — **Terminal 2**
 
 ```bash
 cd smartloan-backend
@@ -146,7 +146,8 @@ npm run dev
 - **JWT + Passport.js** — authentication (email/password + Google OAuth)
 - **Python FastAPI** — ML microservice (FIS + default prediction + explainability)
 - **scikit-fuzzy** — fuzzy logic engine
-- **scikit-learn** — logistic regression model trained on real Kaggle data
+- **PyTorch** — neural network model for default probability prediction
+- **scikit-learn** — preprocessing and evaluation utilities
 
 ---
 
@@ -180,11 +181,11 @@ smartloan-backend/
 
 smartloan-fis/
 ├── fis_engine.py      # Fuzzy Inference System (2-stage)
-├── nn_model.py        # Default probability prediction
+├── nn_model.py        # PyTorch neural network for default probability
 ├── explainer.py       # AI explanation generator
-├── train_model.py     # Model training script
+├── train_model.py     # Model training script (run in Google Colab)
 ├── main.py            # FastAPI entry point
-├── model.pkl          # Trained logistic regression
+├── model.pth          # Trained PyTorch neural network weights
 ├── scaler.pkl         # Fitted StandardScaler
 ├── features.pkl       # Feature list
 └── venv/
@@ -274,7 +275,7 @@ Stored in DB + returned to client
 
 ### Default Prediction
 
-Logistic Regression trained on 150,000 records from the Kaggle "Give Me Some Credit" dataset. Key learned feature weights:
+A PyTorch Neural Network trained on 150,000 records from the Kaggle "Give Me Some Credit" dataset. Architecture: 3 hidden layers (64 → 32 → 16 neurons) with BatchNorm, ReLU, and Dropout. Key learned feature influences:
 
 | Feature | Influence |
 |---------|-----------|
