@@ -3,7 +3,8 @@
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
-
+fis1_global = None
+fis2_global = None
 
 def build_fis():
     # --- Stage 1 Inputs ---
@@ -19,21 +20,21 @@ def build_fis():
     financial_score  = ctrl.Consequent(np.arange(0, 101, 1), 'financial_score')
     experience_score = ctrl.Consequent(np.arange(0, 101, 1), 'experience_score')
 
-    payment_history['poor']    = fuzz.trimf(payment_history.universe, [0, 0, 60])
-    payment_history['average'] = fuzz.trimf(payment_history.universe, [50, 70, 90])
-    payment_history['good']    = fuzz.trimf(payment_history.universe, [80, 100, 100])
+    payment_history['poor']    = fuzz.trapmf(payment_history.universe, [0, 0, 40, 65])
+    payment_history['average'] = fuzz.gaussmf(payment_history.universe, 70, 10)
+    payment_history['good']    = fuzz.trapmf(payment_history.universe, [75, 85, 100, 100])
 
-    utilization['low']    = fuzz.trimf(utilization.universe, [0, 0, 30])
-    utilization['medium'] = fuzz.trimf(utilization.universe, [20, 50, 80])
-    utilization['high']   = fuzz.trimf(utilization.universe, [70, 100, 100])
+    utilization['low'] = fuzz.trapmf(utilization.universe, [0, 0, 20, 40])
+    utilization['medium'] = fuzz.gaussmf(utilization.universe, 50, 15)
+    utilization['high'] = fuzz.trapmf(utilization.universe, [60, 80, 100, 100])
 
-    dti['low']    = fuzz.trimf(dti.universe, [0, 0, 25])
-    dti['medium'] = fuzz.trimf(dti.universe, [20, 40, 60])
-    dti['high']   = fuzz.trimf(dti.universe, [50, 100, 100])
+    dti['low'] = fuzz.trapmf(dti.universe, [0, 0, 15, 30])
+    dti['medium'] = fuzz.gaussmf(dti.universe, 40, 10)
+    dti['high'] = fuzz.trapmf(dti.universe, [50, 70, 100, 100])
 
-    income['low']    = fuzz.trimf(income.universe, [0, 0, 100000])
-    income['medium'] = fuzz.trimf(income.universe, [50000, 200000, 350000])
-    income['high']   = fuzz.trimf(income.universe, [300000, 500000, 500000])
+    income['low'] = fuzz.trapmf(income.universe, [0, 0, 50000, 120000])
+    income['medium'] = fuzz.trapmf(income.universe, [80000, 150000, 250000, 350000])
+    income['high'] = fuzz.trapmf(income.universe, [300000, 400000, 500000, 500000])
 
     emi['low']    = fuzz.trimf(emi.universe, [0, 0, 15000])
     emi['medium'] = fuzz.trimf(emi.universe, [10000, 25000, 40000])
@@ -47,9 +48,9 @@ def build_fis():
     inquiries['moderate'] = fuzz.trimf(inquiries.universe, [1, 4, 7])
     inquiries['many']     = fuzz.trimf(inquiries.universe, [6, 10, 10])
 
-    behaviour_score['low']    = fuzz.trimf(behaviour_score.universe, [0, 0, 40])
-    behaviour_score['medium'] = fuzz.trimf(behaviour_score.universe, [30, 50, 70])
-    behaviour_score['high']   = fuzz.trimf(behaviour_score.universe, [60, 100, 100])
+    behaviour_score['low'] = fuzz.trapmf(behaviour_score.universe, [0, 0, 30, 50])
+    behaviour_score['medium'] = fuzz.gaussmf(behaviour_score.universe, 50, 10)
+    behaviour_score['high'] = fuzz.trapmf(behaviour_score.universe, [60, 75, 100, 100])
 
     financial_score['low']    = fuzz.trimf(financial_score.universe, [0, 0, 40])
     financial_score['medium'] = fuzz.trimf(financial_score.universe, [30, 50, 70])
@@ -70,12 +71,12 @@ def build_fis():
         ctrl.Rule(payment_history['poor'] & utilization['medium'], behaviour_score['low']),
         ctrl.Rule(payment_history['poor'] & utilization['high'],   behaviour_score['low']),
         ctrl.Rule(dti['low'] & income['high'] & emi['low'],        financial_score['high']),
-        ctrl.Rule(dti['low'] & income['medium'],                   financial_score['high']),
+        ctrl.Rule(dti['low'] & income['medium'] & emi['low'],     financial_score['high']),
         ctrl.Rule(dti['medium'] & income['medium'] & emi['medium'],financial_score['medium']),
         ctrl.Rule(dti['low'] & income['low'],                      financial_score['medium']),
         ctrl.Rule(dti['high'] & emi['high'],                       financial_score['low']),
         ctrl.Rule(dti['high'] & income['low'],                     financial_score['low']),
-        ctrl.Rule(emi['high'],                                     financial_score['low']),
+        ctrl.Rule(emi['high']& income['low']  ,financial_score['low']),
         ctrl.Rule(dti['medium'] & income['high'],                  financial_score['medium']),
         ctrl.Rule(dti['medium'] & emi['high'],                     financial_score['low']),
         ctrl.Rule(credit_history['long'] & inquiries['few'],       experience_score['high']),
@@ -87,6 +88,8 @@ def build_fis():
         ctrl.Rule(credit_history['short'] & inquiries['few'],      experience_score['medium']),
         ctrl.Rule(credit_history['short'] & inquiries['moderate'], experience_score['low']),
         ctrl.Rule(credit_history['short'] & inquiries['many'],     experience_score['low']),
+        ctrl.Rule(income['high'] & emi['low'] & dti['low'], financial_score['high']),
+        ctrl.Rule(inquiries['many'] & credit_history['short'], experience_score['low']),
     ]
 
     fis1_ctrl = ctrl.ControlSystem(rules1)
@@ -98,40 +101,41 @@ def build_fis():
     experience = ctrl.Antecedent(np.arange(0, 101, 1), 'experience')
     credit_score = ctrl.Consequent(np.arange(300, 851, 1), 'credit_score')
 
-    behaviour['low']    = fuzz.trimf(behaviour.universe, [0, 0, 40])
-    behaviour['medium'] = fuzz.trimf(behaviour.universe, [30, 50, 70])
-    behaviour['high']   = fuzz.trimf(behaviour.universe, [60, 100, 100])
+    behaviour['low'] = fuzz.trapmf(behaviour.universe, [0, 0, 30, 50])
+    behaviour['medium'] = fuzz.gaussmf(behaviour.universe, 50, 10)
+    behaviour['high'] = fuzz.trapmf(behaviour.universe, [60, 75, 100, 100])
 
-    financial['low']    = fuzz.trimf(financial.universe, [0, 0, 40])
-    financial['medium'] = fuzz.trimf(financial.universe, [30, 50, 70])
-    financial['high']   = fuzz.trimf(financial.universe, [60, 100, 100])
+    financial['low'] = fuzz.trapmf(financial.universe, [0, 0, 30, 50])
+    financial['medium'] = fuzz.gaussmf(financial.universe, 50, 10)
+    financial['high'] = fuzz.trapmf(financial.universe, [60, 75, 100, 100])
 
-    experience['low']    = fuzz.trimf(experience.universe, [0, 0, 40])
-    experience['medium'] = fuzz.trimf(experience.universe, [30, 50, 70])
-    experience['high']   = fuzz.trimf(experience.universe, [60, 100, 100])
+    experience['low'] = fuzz.trapmf(experience.universe, [0, 0, 30, 50])
+    experience['medium'] = fuzz.gaussmf(experience.universe, 50, 10)
+    experience['high'] = fuzz.trapmf(experience.universe, [60, 75, 100, 100])
 
-    credit_score['very_low']  = fuzz.trimf(credit_score.universe, [300, 300, 450])
-    credit_score['low']       = fuzz.trimf(credit_score.universe, [400, 500, 600])
-    credit_score['fair']      = fuzz.trimf(credit_score.universe, [550, 650, 720])
-    credit_score['good']      = fuzz.trimf(credit_score.universe, [700, 780, 820])
-    credit_score['excellent'] = fuzz.trimf(credit_score.universe, [800, 850, 850])
-
+    credit_score['very_low'] = fuzz.trapmf(credit_score.universe, [300, 300, 400, 500])
+    credit_score['low'] = fuzz.trapmf(credit_score.universe, [450, 500, 600, 650])
+    credit_score['fair'] = fuzz.gaussmf(credit_score.universe, 650, 40)
+    credit_score['good'] = fuzz.gaussmf(credit_score.universe, 750, 30)
+    credit_score['excellent'] = fuzz.trapmf(credit_score.universe, [780, 820, 850, 850])
     rules2 = [
-        ctrl.Rule(behaviour['low'],                                                 credit_score['very_low']),
-        ctrl.Rule(financial['low'] & behaviour['medium'],                           credit_score['low']),
-        ctrl.Rule(financial['low'] & behaviour['high'],                             credit_score['fair']),
-        ctrl.Rule(behaviour['high'] & financial['high'] & experience['high'],       credit_score['excellent']),
-        ctrl.Rule(behaviour['high'] & financial['high'] & experience['medium'],     credit_score['good']),
-        ctrl.Rule(behaviour['high'] & financial['medium'] & experience['high'],     credit_score['good']),
-        ctrl.Rule(behaviour['high'] & financial['medium'] & experience['medium'],   credit_score['good']),
+        ctrl.Rule(behaviour['low'], credit_score['very_low']),
+        ctrl.Rule(financial['low'] & behaviour['medium'], credit_score['low']),
+        ctrl.Rule(financial['low'] & behaviour['high'], credit_score['fair']),
+        ctrl.Rule(behaviour['high'] & financial['high'] & experience['high'], credit_score['excellent']),
+        ctrl.Rule(behaviour['high'] & financial['high'] & experience['medium'], credit_score['good']),
+        ctrl.Rule(behaviour['high'] & financial['medium'] & experience['high'], credit_score['good']),
+        ctrl.Rule(behaviour['high'] & financial['medium'] & experience['medium'], credit_score['good']),
         ctrl.Rule(behaviour['medium'] & financial['medium'] & experience['medium'], credit_score['fair']),
-        ctrl.Rule(behaviour['medium'] & financial['high'],                          credit_score['good']),
-        ctrl.Rule(behaviour['medium'] & experience['high'],                         credit_score['fair']),
-        ctrl.Rule(experience['low'] & behaviour['high'],                            credit_score['fair']),
-        ctrl.Rule(experience['low'] & behaviour['medium'],                          credit_score['low']),
-        ctrl.Rule(behaviour['high'] & financial['low'],                             credit_score['fair']),
-        ctrl.Rule(behaviour['medium'] & financial['low'],                           credit_score['low']),
-        ctrl.Rule(behaviour['medium'] & financial['medium'] & experience['low'],    credit_score['low']),
+        ctrl.Rule(behaviour['medium'] & financial['high'], credit_score['good']),
+        ctrl.Rule(behaviour['medium'] & experience['high'], credit_score['fair']),
+        ctrl.Rule(experience['low'] & behaviour['high'], credit_score['fair']),
+        ctrl.Rule(experience['low'] & behaviour['medium'], credit_score['low']),
+        ctrl.Rule(behaviour['high'] & financial['low'], credit_score['fair']),
+        ctrl.Rule(behaviour['medium'] & financial['low'], credit_score['low']),
+        ctrl.Rule(behaviour['medium'] & financial['medium'] & experience['low'], credit_score['low']),
+        ctrl.Rule(behaviour['low'] & financial['low'], credit_score['very_low']),
+        ctrl.Rule(experience['low'] & financial['low'], credit_score['low']),
     ]
 
     fis2_ctrl = ctrl.ControlSystem(rules2)
@@ -139,7 +143,8 @@ def build_fis():
 
     return fis1, fis2
 
-
+   
+fis1_global, fis2_global = build_fis()    
 def get_score_band(score: float):
     if score >= 800: return "Excellent", "Very Low"
     if score >= 700: return "Good",      "Low"
@@ -151,7 +156,13 @@ def get_score_band(score: float):
 def run_fis(payment_history, credit_utilization, debt_to_income_ratio,
             monthly_income, existing_emi, credit_history_length, num_inquiries):
 
-    fis1, fis2 = build_fis()
+    global fis1_global, fis2_global
+
+    fis1 = fis1_global
+    fis2 = fis2_global
+
+    fis1.reset()
+    fis2.reset()
 
     fis1.input['payment_history'] = min(max(payment_history, 0), 100)
     fis1.input['utilization']     = min(max(credit_utilization, 0), 100)

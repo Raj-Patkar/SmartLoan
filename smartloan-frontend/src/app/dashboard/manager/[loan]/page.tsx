@@ -43,7 +43,9 @@ export default function LoanApplicationsPage() {
     );
 
     const filtered = res.data.applications.filter(
-      (a: any) => a.product_name === decodedLoan
+      (a: any) =>
+        a.product_name === decodedLoan &&
+        a.status === "pending"
     );
 
     setData(filtered);
