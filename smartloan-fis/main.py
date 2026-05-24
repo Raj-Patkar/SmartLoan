@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 from fis_engine import run_fis
 from nn_model import predict_default_probability
@@ -9,6 +10,13 @@ from explainer import generate_explanation
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class CreditInput(BaseModel):
     payment_history: float
