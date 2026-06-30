@@ -27,7 +27,7 @@ router.get('/google/callback',
 
         // In a real frontend app you'd redirect with the token
         // For now we return JSON
-        res.redirect(`http://localhost:3000/auth/google-success?token=${token}`);
+        res.redirect(`${process.env.FRONTEND_URL}/auth/google-success?token=${token}`);
     }
 );
 
