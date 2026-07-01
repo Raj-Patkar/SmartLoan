@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../../lib/api";
 
 export default function ManagerDashboard() {
   const router = useRouter();
@@ -12,8 +12,7 @@ export default function ManagerDashboard() {
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
 
   useEffect(() => {
     const role = localStorage.getItem("role");
@@ -30,18 +29,11 @@ export default function ManagerDashboard() {
 
   const init = async () => {
     try {
-      const appRes = await axios.get(
-        "http://localhost:5000/api/manager/applications",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const appRes = await API.get("/manager/applications");
 
       setApplications(appRes.data.applications || []);
 
-      // 🔥 FETCH ALL LOANS
-      const loanRes = await axios.get(
-        "http://localhost:5000/api/loans",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const loanRes = await API.get("/loans");
 
       setLoans(loanRes.data.loans || []);
 

@@ -78,7 +78,7 @@ export default function LoginPage() {
           {/* GOOGLE LOGIN */}
           <div className="mt-6 space-y-3">
 
-            <a href="http://localhost:5000/api/auth/google">
+            <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`}>
               <button className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-xl text-sm sm:text-base hover:bg-gray-50 transition">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" />
                 Sign in with Google

@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../../../lib/api";
 
 export default function LoanApplicationsPage() {
   const { loan } = useParams();
@@ -12,7 +12,7 @@ export default function LoanApplicationsPage() {
   const [selected, setSelected] = useState<any>(null);
   const [userName, setUserName] = useState("");
 
-  const [token, setToken] = useState("");
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -27,20 +27,15 @@ export default function LoanApplicationsPage() {
       return;
     }
 
-    setToken(t);
 
-    fetchData(t); // ✅ correct usage
+
+    fetchData();
   }, []);
 
 
   // ✅ FIXED FUNCTION (NOW ACCEPTS TOKEN)
-  const fetchData = async (authToken: string) => {
-    const res = await axios.get(
-      "http://localhost:5000/api/manager/applications",
-      {
-        headers: { Authorization: `Bearer ${authToken}` },
-      }
-    );
+  const fetchData = async () => {
+    const res = await API.get("/manager/applications");
 
     const filtered = res.data.applications.filter(
       (a: any) =>
@@ -54,15 +49,12 @@ export default function LoanApplicationsPage() {
 
   // ✅ UPDATE STATUS ALSO USES TOKEN SAFELY
   const updateStatus = async (id: number, status: string) => {
-    await axios.patch(
-      `http://localhost:5000/api/manager/applications/${id}/status`,
-      { status },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+    await API.patch(
+      `/manager/applications/${id}/status`,
+      { status }
     );
 
-    fetchData(token); // 🔥 IMPORTANT FIX
+    fetchData(); 
   };
 
   return (

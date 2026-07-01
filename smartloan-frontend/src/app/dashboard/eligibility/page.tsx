@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, ChangeEvent } from "react";
-import axios from "axios";
+import API from "../../../lib/api";
 import { useRouter } from "next/navigation";
 
 export default function EligibilityPage() {
@@ -41,9 +41,7 @@ export default function EligibilityPage() {
 
         const init = async () => {
             try {
-                const profile = await axios.get("http://localhost:5000/api/profile", {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const profile = await API.get("/profile");
 
                 const userProfile = profile.data?.profile;
 
@@ -56,21 +54,15 @@ export default function EligibilityPage() {
                     setShowModal(true); // 🔥 force modal
                 }
 
-                const res = await axios.get(
-                    "http://localhost:5000/api/assessment/latest",
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                const res = await API.get("/assessment/latest");
 
                 setAssessment(res.data.assessment);
                 if (res.data.assessment) {
                     setLoanLoading(true);
 
-                    const loanRes = await axios.get(
-                        "http://localhost:5000/api/loans/recommendations",
-                        { headers: { Authorization: `Bearer ${token}` } }
-                    );
+                    const loanRes = await API.get("/loans/recommendations");
 
-                    
+
 
                     setLoans(loanRes.data.eligible_products || []);
                     setLoanLoading(false);
@@ -107,16 +99,10 @@ export default function EligibilityPage() {
         }
 
         try {
-            await axios.post(
-                "http://localhost:5000/api/loans/apply",
-                {
-                    loan_product_id: loan.id,
-                    amount_requested: amountNumber
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            await API.post("/loans/apply", {
+                loan_product_id: loan.id,
+                amount_requested: amountNumber
+            });
 
             alert(`✅ Applied successfully!`);
         } catch (err: any) {
@@ -126,9 +112,7 @@ export default function EligibilityPage() {
     const saveProfile = async () => {
         const token = localStorage.getItem("token");
 
-        await axios.post("http://localhost:5000/api/profile", form, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        await API.post("/profile", form);
 
         setHasProfile(true);
         setShowModal(false);
@@ -141,17 +125,10 @@ export default function EligibilityPage() {
             setRunning(true);
 
             // 🔹 Run assessment
-            await axios.post(
-                "http://localhost:5000/api/assessment/run",
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await API.post("/assessment/run", {});
 
             // 🔹 Get latest assessment
-            const res = await axios.get(
-                "http://localhost:5000/api/assessment/latest",
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const res = await API.get("/assessment/latest");
 
             setAssessment(res.data.assessment);
 
@@ -159,10 +136,7 @@ export default function EligibilityPage() {
             if (res.data.assessment) {
                 setLoanLoading(true);
 
-                const loanRes = await axios.get(
-                    "http://localhost:5000/api/loans/recommendations",
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                const loanRes = await API.get("/loans/recommendations");
 
                 setLoans(loanRes.data.eligible_products || []);
                 setLoanLoading(false);

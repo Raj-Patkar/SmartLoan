@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../../lib/api";
 import { useRouter } from "next/navigation";
 
 export default function MyApplicationsPage() {
@@ -12,24 +12,16 @@ export default function MyApplicationsPage() {
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+  
     const name = localStorage.getItem("userName");
 
-    if (!token) {
-      router.push("/auth/login");
-      return;
-    }
+
 
     if (name) setUserName(name);
 
     const fetchApplications = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/loans/my-applications",
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+        const res = await API.get("/loans/my-applications");
 
         setApplications(res.data.applications || []);
       } catch (err) {

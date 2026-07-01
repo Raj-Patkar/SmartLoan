@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../../lib/api";
 
 export default function LoansPage() {
     const [loans, setLoans] = useState<any[]>([]);
@@ -12,12 +12,7 @@ export default function LoansPage() {
             const token = localStorage.getItem("token");
 
             try {
-                const res = await axios.get(
-                    "http://localhost:5000/api/loans/recommendations",
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
+                const res = await API.get("/loans/recommendations");
 
                 setLoans(res.data.eligible_products || []);
             } catch (err) {
@@ -60,17 +55,10 @@ export default function LoansPage() {
         }
 
         try {
-            const res = await axios.post(
-                "http://localhost:5000/api/loans/apply",
-                {
-                    loan_product_id: loan.id,
-                    amount_requested: amountNumber
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
-
+            const res = await API.post("/loans/apply", {
+                loan_product_id: loan.id,
+                amount_requested: amountNumber
+            });
             alert(`✅ Applied for ₹${amountNumber} successfully!`);
 
         } catch (err: any) {
