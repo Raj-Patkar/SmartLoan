@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function GoogleSuccess() {
+function GoogleSuccessContent() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -11,19 +11,30 @@ export default function GoogleSuccess() {
     const token = params.get("token");
 
     if (token) {
-      // Save token
       localStorage.setItem("token", token);
-
-      // Redirect to dashboard
-      router.push("/dashboard");
+      router.replace("/dashboard");
     } else {
-      router.push("/auth/login");
+      router.replace("/auth/login");
     }
-  }, []);
+  }, [params, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <p className="text-lg">Signing you in...</p>
     </div>
+  );
+}
+
+export default function GoogleSuccess() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-lg">Signing you in...</p>
+        </div>
+      }
+    >
+      <GoogleSuccessContent />
+    </Suspense>
   );
 }
